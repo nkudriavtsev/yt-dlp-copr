@@ -17,11 +17,6 @@ Source:         %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 # License of the specfile
 Source:         yt-dlp.spec.license
 
-# https://github.com/yt-dlp/yt-dlp/commit/6f9e6537434562d513d0c9b68ced8a61ade94a64
-# [rh:websockets] Upgrade websockets to 13.0 (#10815)
-# Revert this patch for compatibility with older Fedora versions
-Patch1000:      websockets-13.patch
-
 BuildArch:      noarch
 
 BuildRequires:  python3-devel
@@ -80,10 +75,6 @@ Fish command line completion support for %{name}.
 
 %prep
 %autosetup -N
-%if %{defined fedora} && %{fedora} <= 41
-# Revert patch for compatibility with older websockets
-%patch -P1000 -p1 -R
-%endif
 
 # Remove unnecessary shebangs
 find -type f ! -executable -name '*.py' -print -exec sed -i -e '1{\@^#!.*@d}' '{}' +
