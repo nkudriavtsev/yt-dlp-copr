@@ -1,0 +1,77 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index d5480e1c6d73..fe6894a42838 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -49,7 +49,7 @@ dependencies = [
+     "pycryptodomex",
+     "requests>=2.32.2,<3",
+     "urllib3>=1.26.17,<3",
+-    "websockets>=12.0",
++    "websockets>=13.0",
+ ]
+ 
+ [project.optional-dependencies]
+diff --git a/test/test_websockets.py b/test/test_websockets.py
+index 43f20ac655ad..06112cc0b8fb 100644
+--- a/test/test_websockets.py
++++ b/test/test_websockets.py
+@@ -88,7 +88,7 @@ def create_wss_websocket_server():
+     certfn = os.path.join(TEST_DIR, 'testcert.pem')
+     sslctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+     sslctx.load_cert_chain(certfn, None)
+-    return create_websocket_server(ssl_context=sslctx)
++    return create_websocket_server(ssl=sslctx)
+ 
+ 
+ MTLS_CERT_DIR = os.path.join(TEST_DIR, 'testdata', 'certificate')
+@@ -103,7 +103,7 @@ def create_mtls_wss_websocket_server():
+     sslctx.load_verify_locations(cafile=cacertfn)
+     sslctx.load_cert_chain(certfn, None)
+ 
+-    return create_websocket_server(ssl_context=sslctx)
++    return create_websocket_server(ssl=sslctx)
+ 
+ 
+ def create_legacy_wss_websocket_server():
+@@ -112,7 +112,7 @@ def create_legacy_wss_websocket_server():
+     sslctx.maximum_version = ssl.TLSVersion.TLSv1_2
+     sslctx.set_ciphers('SHA1:AESCCM:aDSS:eNULL:aNULL')
+     sslctx.load_cert_chain(certfn, None)
+-    return create_websocket_server(ssl_context=sslctx)
++    return create_websocket_server(ssl=sslctx)
+ 
+ 
+ def ws_validate_and_send(rh, req):
+@@ -139,7 +139,7 @@ def setup_class(cls):
+         cls.wss_thread, cls.wss_port = create_wss_websocket_server()
+         cls.wss_base_url = f'wss://127.0.0.1:{cls.wss_port}'
+ 
+-        cls.bad_wss_thread, cls.bad_wss_port = create_websocket_server(ssl_context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER))
++        cls.bad_wss_thread, cls.bad_wss_port = create_websocket_server(ssl=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER))
+         cls.bad_wss_host = f'wss://127.0.0.1:{cls.bad_wss_port}'
+ 
+         cls.mtls_wss_thread, cls.mtls_wss_port = create_mtls_wss_websocket_server()
+diff --git a/yt_dlp/networking/_websockets.py b/yt_dlp/networking/_websockets.py
+index 492af1154de7..21b765b91dc8 100644
+--- a/yt_dlp/networking/_websockets.py
++++ b/yt_dlp/networking/_websockets.py
+@@ -47,10 +47,7 @@
+ # 2: "AttributeError: 'ClientConnection' object has no attribute 'recv_events_exc'. Did you mean: 'recv_events'?"
+ import websockets.sync.connection  # isort: split
+ with contextlib.suppress(Exception):
+-    # > 12.0
+     websockets.sync.connection.Connection.recv_exc = None
+-    # 12.0
+-    websockets.sync.connection.Connection.recv_events_exc = None
+ 
+ 
+ class WebsocketsResponseAdapter(WebSocketResponse):
+@@ -162,7 +159,7 @@ def _send(self, request):
+                 additional_headers=headers,
+                 open_timeout=timeout,
+                 user_agent_header=None,
+-                ssl_context=ssl_ctx if wsuri.secure else None,
++                ssl=ssl_ctx if wsuri.secure else None,
+                 close_timeout=0,  # not ideal, but prevents yt-dlp hanging
+             )
+             return WebsocketsResponseAdapter(conn, url=request.url)
