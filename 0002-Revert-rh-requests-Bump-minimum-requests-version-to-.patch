@@ -1,0 +1,58 @@
+From 1ab3a80984604ab9bb0ea27d9fb326619b074b35 Mon Sep 17 00:00:00 2001
+From: Maxwell G <maxwell@gtmx.me>
+Date: Mon, 6 Jan 2025 14:48:08 -0600
+Subject: [PATCH 2/2] Revert "[rh:requests] Bump minimum `requests` version to
+ 2.32.2 (#10079)"
+
+This reverts commit db50f19d76c6870a5a13d0cab9287d684fd7449a.
+---
+ pyproject.toml                 | 2 +-
+ yt_dlp/networking/_requests.py | 9 +++++++--
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/pyproject.toml b/pyproject.toml
+index 9ffd899eb..4d4ccb0f8 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -50,7 +50,7 @@ default = [
+     "certifi",
+     "mutagen",
+     "pycryptodomex",
+-    "requests>=2.32.2,<3",
++    "requests>=2.31.0,<3",
+     "urllib3>=1.26.17,<3",
+     "websockets>=12.0",
+ ]
+diff --git a/yt_dlp/networking/_requests.py b/yt_dlp/networking/_requests.py
+index 7de95ab3b..140426391 100644
+--- a/yt_dlp/networking/_requests.py
++++ b/yt_dlp/networking/_requests.py
+@@ -23,8 +23,8 @@
+ if urllib3_version < (1, 26, 17):
+     raise ImportError('Only urllib3 >= 1.26.17 is supported')
+ 
+-if requests.__build__ < 0x023202:
+-    raise ImportError('Only requests >= 2.32.2 is supported')
++if requests.__build__ < 0x023100:
++    raise ImportError('Only requests >= 2.31.0 is supported')
+ 
+ import requests.adapters
+ import requests.utils
+@@ -184,9 +184,14 @@ def proxy_manager_for(self, proxy, **proxy_kwargs):
+         return super().proxy_manager_for(proxy, **proxy_kwargs, **self._pm_args, **extra_kwargs)
+ 
+     # Skip `requests` internal verification; we use our own SSLContext
++    # requests 2.31.0+
+     def cert_verify(*args, **kwargs):
+         pass
+ 
++    # requests 2.31.0-2.32.1
++    def _get_connection(self, request, *_, proxies=None, **__):
++        return self.get_connection(request.url, proxies)
++
+     # requests 2.32.2+: Reimplementation without `_urllib3_request_context`
+     def get_connection_with_tls_context(self, request, verify, proxies=None, cert=None):
+         url = urllib3.util.parse_url(request.url).url
+-- 
+2.47.1
+
